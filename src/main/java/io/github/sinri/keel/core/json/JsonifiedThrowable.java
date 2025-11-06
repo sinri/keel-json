@@ -1,16 +1,14 @@
 package io.github.sinri.keel.core.json;
 
-import io.github.sinri.keel.core.helper.KeelRuntimeHelper;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import static io.github.sinri.keel.facade.KeelInstance.Keel;
 
 /**
  * A JSON CODEC REGISTER action is required, i.e.
@@ -23,13 +21,24 @@ import static io.github.sinri.keel.facade.KeelInstance.Keel;
  *
  */
 public class JsonifiedThrowable extends JsonifiableDataUnitImpl {
+    public final static Set<String> IgnorableStackPackageSet = new HashSet<>() {{
+        add("io.github.sinri.keel.facade.async.");
+        add("io.github.sinri.keel.facade.tesuto.");
+        add("io.vertx.core.");
+        add("io.vertx.ext.web");
+        add("io.netty.");
+        add("java.lang.");
+        add("jdk.internal.");
+        add("io.vertx.mysqlclient");
+        add("io.vertx.sqlclient");
+    }};
 
     private JsonifiedThrowable() {
         super();
     }
 
     public static JsonifiedThrowable wrap(@Nonnull Throwable throwable) {
-        return wrap(throwable, KeelRuntimeHelper.ignorableCallStackPackage, true);
+        return wrap(throwable, IgnorableStackPackageSet, true);
     }
 
     @Nonnull
@@ -76,7 +85,7 @@ public class JsonifiedThrowable extends JsonifiableDataUnitImpl {
     ) {
         List<JsonifiedCallStackItem> items = new ArrayList<>();
 
-        Keel.jsonHelper().filterStackTrace(
+        filterStackTrace(
                 stackTrace,
                 ignorableStackPackageSet,
                 (ignoringClassPackage, ignoringCount) -> {
@@ -84,7 +93,8 @@ public class JsonifiedThrowable extends JsonifiableDataUnitImpl {
                         items.add(new JsonifiedCallStackItem(ignoringClassPackage, ignoringCount));
                     }
                 },
-                stackTranceItem -> items.add(new JsonifiedCallStackItem(stackTranceItem)));
+                stackTranceItem -> items.add(new JsonifiedCallStackItem(stackTranceItem))
+        );
 
         return items;
     }
@@ -100,6 +110,53 @@ public class JsonifiedThrowable extends JsonifiableDataUnitImpl {
         } catch (Throwable throwable) {
             var jt = JsonifiedThrowable.wrap(throwable);
             System.out.println(jt.toJsonObject().encodePrettily());
+        }
+    }
+
+    private static void filterStackTrace(
+            @Nullable StackTraceElement[] stackTrace,
+            @Nonnull Set<String> ignorableStackPackageSet,
+            @Nonnull BiConsumer<String, Integer> ignoredStackTraceItemsConsumer,
+            @Nonnull Consumer<StackTraceElement> stackTraceItemConsumer
+    ) {
+        if (stackTrace != null) {
+            String ignoringClassPackage = null;
+            int ignoringCount = 0;
+            for (StackTraceElement stackTranceItem : stackTrace) {
+                String className = stackTranceItem.getClassName();
+                String matchedClassPackage = null;
+                for (var cp : ignorableStackPackageSet) {
+                    if (className.startsWith(cp)) {
+                        matchedClassPackage = cp;
+                        break;
+                    }
+                }
+                if (matchedClassPackage == null) {
+                    if (ignoringCount > 0) {
+                        ignoredStackTraceItemsConsumer.accept(ignoringClassPackage, ignoringCount);
+                        ignoringClassPackage = null;
+                        ignoringCount = 0;
+                    }
+
+                    stackTraceItemConsumer.accept(stackTranceItem);
+                } else {
+                    if (ignoringCount > 0) {
+                        if (Objects.equals(ignoringClassPackage, matchedClassPackage)) {
+                            ignoringCount += 1;
+                        } else {
+                            ignoredStackTraceItemsConsumer.accept(ignoringClassPackage, ignoringCount);
+                            ignoringClassPackage = matchedClassPackage;
+                            ignoringCount = 1;
+                        }
+                    } else {
+                        ignoringClassPackage = matchedClassPackage;
+                        ignoringCount = 1;
+                    }
+                }
+            }
+            if (ignoringCount > 0) {
+                ignoredStackTraceItemsConsumer.accept(ignoringClassPackage, ignoringCount);
+            }
         }
     }
 

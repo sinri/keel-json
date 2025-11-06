@@ -459,53 +459,6 @@ public interface JsonObjectReadable extends Iterable<Map.Entry<String, Object>> 
     }
 
     /**
-     * Attempts to read and convert a JSON object into an instance of the specified
-     * class that implements
-     * {@link JsonifiableEntity}.
-     *
-     * <p>
-     * This method first tries to create an instance of the provided class using its
-     * no-argument constructor and
-     * then
-     * loads the data from the JSON object. If the no-argument constructor is not
-     * available, it tries to use a
-     * constructor
-     * that takes a {@link JsonObject} as an argument. If neither constructor is
-     * found or an exception occurs during
-     * instantiation, the method returns null.
-     * </p>
-     *
-     * @param bClass the class of the entity to be created, which must extend or
-     *               implement {@link JsonifiableEntity}
-     * @param args   the arguments used to form a JSON pointer for locating the JSON
-     *               object within a larger structure
-     * @param <B>    the type of the entity to be created
-     * @return an instance of the specified class with data loaded from the JSON
-     *         object, or null if the operation fails
-     * @since 2.7
-     */
-    @Deprecated(since = "4.1.5", forRemoval = true)
-    default @Nullable <B extends JsonifiableEntity<?>> B readJsonifiableEntity(@Nonnull Class<B> bClass,
-                                                                               String... args) {
-        JsonObject jsonObject = readJsonObject(args);
-        if (jsonObject == null)
-            return null;
-        try {
-            var x = bClass.getConstructor().newInstance();
-            x.reloadDataFromJsonObject(jsonObject);
-            return x;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
-                 | NoSuchMethodException ignored1) {
-            try {
-                return bClass.getConstructor(JsonObject.class).newInstance(jsonObject);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException
-                     | NoSuchMethodException ignored2) {
-                return null;
-            }
-        }
-    }
-
-    /**
      * Read an entity from a JSON Object with Jackson
      * {@link JsonObject#mapTo(Class)}.
      *

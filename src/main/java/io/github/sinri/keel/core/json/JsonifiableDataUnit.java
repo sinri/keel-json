@@ -13,7 +13,6 @@ import java.util.function.Function;
 
 /**
  * This class is for data unit.
- * It is an alternative to {@link JsonifiableEntity} if you want to avoid generic type on your implementation.
  *
  * @since 4.1.1
  */
