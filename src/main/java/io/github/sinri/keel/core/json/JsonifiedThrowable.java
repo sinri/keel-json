@@ -1,11 +1,15 @@
 package io.github.sinri.keel.core.json;
 
+import io.github.sinri.keel.utils.StackUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -21,24 +25,13 @@ import java.util.function.Consumer;
  *
  */
 public class JsonifiedThrowable extends JsonifiableDataUnitImpl {
-    public final static Set<String> IgnorableStackPackageSet = new HashSet<>() {{
-        add("io.github.sinri.keel.facade.async.");
-        add("io.github.sinri.keel.facade.tesuto.");
-        add("io.vertx.core.");
-        add("io.vertx.ext.web");
-        add("io.netty.");
-        add("java.lang.");
-        add("jdk.internal.");
-        add("io.vertx.mysqlclient");
-        add("io.vertx.sqlclient");
-    }};
 
     private JsonifiedThrowable() {
         super();
     }
 
     public static JsonifiedThrowable wrap(@Nonnull Throwable throwable) {
-        return wrap(throwable, IgnorableStackPackageSet, true);
+        return wrap(throwable, StackUtils.IgnorableCallStackPackage, true);
     }
 
     @Nonnull
