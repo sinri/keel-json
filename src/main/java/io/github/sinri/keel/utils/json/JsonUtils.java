@@ -11,10 +11,17 @@ import java.util.function.Consumer;
 
 public class JsonUtils {
     /**
+     * Private constructor to prevent instantiation.
+     */
+    private JsonUtils() {
+        // Utility class, no instance needed
+    }
+
+    /**
      * @since 2.4
      */
     @Nonnull
-    private JsonArray getSortedJsonArray(@Nonnull JsonArray array) {
+    private static JsonArray getSortedJsonArray(@Nonnull JsonArray array) {
         List<Object> list = new ArrayList<>();
         array.forEach(list::add);
         list.sort(Comparator.comparing(Object::toString));
@@ -25,7 +32,7 @@ public class JsonUtils {
      * @since 2.4
      */
     @Nonnull
-    public String getJsonForArrayWhoseItemsSorted(@Nonnull JsonArray array) {
+    public static String getJsonForArrayWhoseItemsSorted(@Nonnull JsonArray array) {
         return getSortedJsonArray(array).toString();
     }
 
@@ -33,7 +40,7 @@ public class JsonUtils {
      * @since 2.4
      */
     @Nonnull
-    private JsonObject getSortedJsonObject(@Nonnull JsonObject object) {
+    private static JsonObject getSortedJsonObject(@Nonnull JsonObject object) {
         JsonObject result = new JsonObject();
         List<String> keyList = new ArrayList<>(object.getMap().keySet());
         keyList.sort(Comparator.naturalOrder());
@@ -54,11 +61,11 @@ public class JsonUtils {
      * @since 2.4
      */
     @Nonnull
-    public String getJsonForObjectWhoseItemKeysSorted(@Nonnull JsonObject object) {
+    public static String getJsonForObjectWhoseItemKeysSorted(@Nonnull JsonObject object) {
         return getSortedJsonObject(object).toString();
     }
 
-    public void filterStackTrace(
+    public static void filterStackTrace(
             @Nullable StackTraceElement[] stackTrace,
             @Nonnull Set<String> ignorableStackPackageSet,
             @Nonnull BiConsumer<String, Integer> ignoredStackTraceItemsConsumer,
@@ -109,7 +116,7 @@ public class JsonUtils {
      * @since 3.0.0
      */
     @Nonnull
-    public String renderJsonToStringBlock(@Nullable String name, @Nullable Object object) {
+    public static String renderJsonToStringBlock(@Nullable String name, @Nullable Object object) {
         if (object == null) {
             return "null";
         }
@@ -122,7 +129,7 @@ public class JsonUtils {
      * @return rendered string block ended with NEW_LINE.
      */
     @Nonnull
-    private String renderJsonItem(@Nullable String key, @Nullable Object object, int indentation, @Nullable String typeMark) {
+    private static String renderJsonItem(@Nullable String key, @Nullable Object object, int indentation, @Nullable String typeMark) {
         StringBuilder subBlock = new StringBuilder();
         if (indentation > 1) {
             subBlock.append(" ".repeat(indentation - 2));
